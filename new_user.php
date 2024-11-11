@@ -1,17 +1,49 @@
 <?php
-// session start here...
 
-// get all 3 strings from the form (and scrub w/ validation function)
+session_start();
 
-// make sure that the two password values match!
+include "validate.php";
+$user = test_input($_POST['user']);
+$userpd = test_input($_POST['pwd']);
+$repeat = test_input($_POST['repeat']);
 
+if ($userpd == $repeat) {
+    $pwd = password_hash($userpd, PASSWORD_DEFAULT);
+} else {
+    header('location: index.php');
+    exit;
+}
 
-// create the password_hash using the PASSWORD_DEFAULT argument
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "softball";
 
-// login to the database
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-// make sure that the new user is not already in the database
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
-// insert username and password hash into db (put the username in the session
-// or make them login)
+$user_check_query = "SELECT * FROM users WHERE username = '$user'";
+$result = $conn->query($user_check_query);
 
+if ($result->num_rows > 0) {
+    echo "Username taken";
+    exit;
+}
+
+$sql = "INSERT INTO users (username, password) VALUES ('$user', '$pwd')";
+
+if ($conn->query($sql) === TRUE) {
+    echo "Account Created";
+    $_SESSION['username'] = $user;
+    $_SESSION['error'] = '';
+    echo "<br>";
+    echo "<a href='index.php'>Menu</a>";
+} else {
+    echo "Error creating account";
+}
+
+$conn->close();
+?>
